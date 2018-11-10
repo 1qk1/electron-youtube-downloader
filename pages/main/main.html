@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Youtube Downloader</title>
+  <link rel="stylesheet" href="../stylesheets/global.css">
+  <link rel="stylesheet" href="../stylesheets/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+</head>
+
+<body>
+  <div class="container center-align content-center">
+    <form>
+      <div class="row">
+        <div class="col s8">
+          <div class="input-field input-wrapper">
+            <input type="text" required placeholder="Paste a youtube video or playlist link" name="url">
+          </div>
+        </div>
+        <div class="input-field col s2">
+          <select name="urlType">
+            <option selected value="video">Video</option>
+            <option value="playlist">Playlist</option>
+          </select>
+        </div>
+        <div class="input-field col s2">
+          <select name="downloadQuality">
+            <option selected value="320">320kbps</option>
+            <option value="192">192kbps</option>
+            <option value="160">160kbps</option>
+            <option value="128">128kbps</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-wrapper">
+        <label class="select-folder">
+          Click me and select an output folder
+          <p class='output-folder-preview'></p>
+        </label>
+      </div>
+      <button type="submit" class="waves-effect red waves-light btn">Download</button>
+    </form>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  
+  <script src="./main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,31 @@
+.totalProgress-wrapper {
+  margin-bottom: 3rem;
+}
+
+.totalProgress-box {
+  margin-bottom: 3rem;
+}
+
+.totalProgress-box h5 {
+  margin-bottom: 3rem;
+}
+
+.totalProgress-box .totalProgress {
+  height: 12px;
+  border-radius: 0;
+  background-color: #ffebee;
+}
+
+.totalProgress-box .totalProgress .determinate {
+  background-color: #f44336;
+}
+
+.progress-box .progress {
+  height: 8px;
+  border-radius: 0;
+  background-color: #ffebee;
+}
+
+.progress-box .progress .determinate {
+  background-color: #f44336;
+}

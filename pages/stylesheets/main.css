@@ -1,0 +1,9 @@
+body {
+  display: flex;
+  align-items: center;
+}
+
+
+.input-wrapper {
+  margin-bottom: 2rem;
+}
