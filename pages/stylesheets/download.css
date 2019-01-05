@@ -18,6 +18,7 @@
 
 .totalProgress-box .totalProgress .determinate {
   background-color: #f44336;
+  height: 100%;
 }
 
 .progress-box .progress {
