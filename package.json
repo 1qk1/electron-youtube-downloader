@@ -12,8 +12,9 @@
     "electron": "^3.0.4"
   },
   "dependencies": {
+    "electron-store": "^2.0.0",
     "fluent-ffmpeg": "^2.1.2",
-    "randomstring": "^1.1.5",
+    "jquery": "^3.3.1",
     "sanitize-filename": "^1.6.1",
     "youtube-playlist": "^1.0.1",
     "ytdl-core": "^0.26.3"
