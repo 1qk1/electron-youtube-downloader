@@ -1,4 +1,5 @@
 const { ipcRenderer } = require("electron");
+const $ = require("jquery");
 let downloading = {};
 document.querySelector(".back-btn").addEventListener("click", () => {
   ipcRenderer.send("page:main");
@@ -7,42 +8,66 @@ document.querySelector(".back-btn").addEventListener("click", () => {
 ipcRenderer.on("progress", (e, progressData) => {
   // video_id
   // progress %
-  const downloadingVideos = document.querySelectorAll('.downloading-video .progress-box');
-  const {progress, video_id} = progressData;
-  downloading[video_id].progress = progress || 0;
+  const { progress, video_id, completed } = progressData;
 
-  const totalProgress = Object.values(downloading).reduce((sum, acc) => {
-    return sum + (acc.progress || 0);
-  }, 0) / Object.keys(downloading).length;
-  if (totalProgress === 100) {
-    document.querySelector(".progress-message").textContent =
-      "Downloaded successfully!";
+  const progressInt = parseInt(progress);
+
+  if (downloading[video_id].progress === progressInt && !completed) return;
+
+  downloading[video_id] = {
+    ...downloading[video_id],
+    progress: progressInt,
+    completed
+  };
+
+  $(`#${video_id} .determinate`).css("width", `${progressInt}%`);
+  $(`#${video_id} .progress-percentage p`).text(`${progressInt}%`);
+
+  const totalProgress = parseInt(
+    Object.values(downloading).reduce((sum, acc) => {
+      return sum + acc.progress;
+    }, 0) / Object.keys(downloading).length
+  );
+
+  $(".totalProgress .determinate").css("width", `${totalProgress}%`);
+  $(".totalProgress-percentage p").text(`${totalProgress}%`);
+
+  if (progressInt === 100) {
+    $(`#${video_id} .progress-percentage p`).text("Encoding to mp3");
   }
-  downloadingVideos.forEach(vid => {
-    const id = vid.parentElement.id;
-    const progress = downloading[id].progress;
-    vid.children[0].children[0].setAttribute('style', `width: ${progress}%`)
-    vid.children[1].children[0].textContent = `${Math.floor(progress)}%`
-  })
-  // console.log(downloadingVideos);
+
+  if (completed === true) {
+    $(`#${video_id} .progress-percentage p`).text("Downloaded");
+  }
+
+  if (
+    totalProgress === 100 &&
+    Object.values(downloading).every(vid => vid.completed === true)
+  ) {
+    $(".totalProgress-percentage p").text("Downloaded");
+  }
 });
 
 ipcRenderer.on("info", (error, info) => {
-  const {title, thumbnail_url, video_id } = info;
+  const { title, thumbnail_url, video_id } = info;
   // title
   // thumbnail_url
   // video_id
   // description (?)
-  downloading[video_id] = {title, thumbnail_url}
-  console.log(downloading);
-  const elements = Object.values(downloading).reduce((a, b) => {
-    const elText = `
+  downloading[video_id] = {
+    title,
+    thumbnail_url,
+    progress: 0,
+    completed: undefined,
+    video_id
+  };
+  const elText = `
     <div class="row downloading-video" id="${video_id}">
       <div class="col s2">
-        <img src="${b.thumbnail_url}" alt=""/>
+        <img src="${thumbnail_url}" alt=""/>
       </div>
       <div class="col s8">
-        <p>${b.title}</p>
+        <p>${title}</p>
       </div>
       <div class="progress-box col s2">
         <div class="progress">
@@ -53,7 +78,8 @@ ipcRenderer.on("info", (error, info) => {
         </div>
       </div>
     </div>`;
-    return [...a, elText];
-  },[])
-  document.querySelector('.video-showcase').innerHTML = elements.join('');
+  $(".video-showcase").append($.parseHTML(elText));
 });
+
+// https://www.youtube.com/watch?v=KfuukDHC0d8
+// https://www.youtube.com/playlist?list=PLhG3EYJapgnHHzd9Fjf3iDf27RPMTAxfc
