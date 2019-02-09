@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^3.0.4"
+    "electron": "^4.0.4"
   },
   "dependencies": {
     "electron-store": "^2.0.0",
@@ -17,6 +17,6 @@
     "jquery": "^3.3.1",
     "sanitize-filename": "^1.6.1",
     "youtube-playlist": "^1.0.1",
-    "ytdl-core": "^0.26.3"
+    "ytdl-core": "^0.29.1"
   }
 }
