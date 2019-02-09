@@ -69,7 +69,6 @@ const downloadOne = async ({ url, downloadQuality }) => {
   });
   // start the download
   const stream = ytdl(url, {
-    // quality: "highestaudio",
     filter: "audio",
     highWaterMark: 1024 * 1024 * 10
   })
@@ -94,10 +93,8 @@ const downloadOne = async ({ url, downloadQuality }) => {
       });
     })
     .on("end", () => {
-      // const filenameRegex = /(["/\\:*?<>|])/gi;
       fs.rename(
         `${downloadFolder}/${video_id}.mp3`,
-        // `${downloadFolder}/${title.replace(filenameRegex, "")}.mp3`,
         `${downloadFolder}/${sanitizer(title)}.mp3`,
         () => {
           mainWindow.webContents.send("progress", {
