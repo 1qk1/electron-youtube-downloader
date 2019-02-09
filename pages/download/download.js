@@ -6,8 +6,6 @@ document.querySelector(".back-btn").addEventListener("click", () => {
 });
 
 ipcRenderer.on("progress", (e, progressData) => {
-  // video_id
-  // progress %
   const { progress, video_id, completed } = progressData;
 
   const progressInt = parseInt(progress);
@@ -50,10 +48,6 @@ ipcRenderer.on("progress", (e, progressData) => {
 
 ipcRenderer.on("info", (error, info) => {
   const { title, thumbnail_url, video_id } = info;
-  // title
-  // thumbnail_url
-  // video_id
-  // description (?)
   downloading[video_id] = {
     title,
     thumbnail_url,
