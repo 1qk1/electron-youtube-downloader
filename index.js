@@ -1,12 +1,13 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
-const fs = require("fs");
-const ytdl = require("ytdl-core");
-const ffmpeg = require("fluent-ffmpeg");
-const ytlist = require("youtube-playlist");
-const sanitizer = require("sanitize-filename");
+const { app, BrowserWindow, ipcMain } = require("electron"),
+  fs = require("fs"),
+  ytdl = require("ytdl-core"),
+  ytlist = require("youtube-playlist"),
+  sanitizer = require("sanitize-filename"),
+  upath = require("upath"),
+  convert = require("./convert"),
+  state = require("./state");
 
 let mainWindow;
-let ffmpegProccess = {};
 let downloadFolder;
 
 const initWindow = () => {
@@ -16,23 +17,20 @@ const initWindow = () => {
   });
 
   mainWindow.on("close", () => {
-    clearDownloads();
+    state.deleteAllProcesses();
   });
 
   mainWindow.loadFile(`${__dirname}/pages/main/main.html`);
 };
 
-const clearDownloads = () => {
-  if (ffmpegProccess.length !== 0) {
-    for (let proccess in ffmpegProccess) {
-      ffmpegProccess[proccess].task.kill();
-    }
-    ffmpegProccess = {};
-  }
+errorHandler = (error, video_id) => {
+  console.log("error:", error);
+  console.log("deleting processes for video_id:", video_id);
+  deleteProcess(video_id);
 };
 
 const loadMain = () => {
-  clearDownloads();
+  state.deleteAllProcesses();
   mainWindow.loadFile(`${__dirname}/pages/main/main.html`);
 };
 
@@ -43,7 +41,7 @@ const loadDownload = (e, downloadInfo) => {
 
 const download = downloadInfo => {
   const { url, outputFolder, downloadQuality } = downloadInfo;
-  downloadFolder = outputFolder;
+  downloadFolder = upath.normalize(outputFolder);
   if (ytdl.validateID(url) || ytdl.validateURL(url)) {
     downloadOne({ url, downloadQuality });
   } else {
@@ -67,47 +65,42 @@ const downloadOne = async ({ url, downloadQuality }) => {
     thumbnail_url,
     video_id
   });
+
   // start the download
-  const stream = ytdl(url, {
+  const readable = ytdl(url, {
     filter: "audio",
     highWaterMark: 1024 * 1024 * 10
   })
-    .on("error", e => {
-      console.log(e);
+    .on("error", error => {
+      errorHandler(error, video_id);
     })
     .on("progress", (chunk, downloaded, total) => {
       const progress = (downloaded / total) * 100;
       mainWindow.webContents.send("progress", { progress, video_id });
-    });
-
-  // encode the stream to mp3
-  const task = ffmpeg(stream)
-    .audioBitrate(Number(downloadQuality))
-    .audioCodec("libmp3lame")
-    .save(`${downloadFolder}/${video_id}.mp3`)
-    .on("error", () => {
-      stream.pause();
-      stream.destroy();
-      fs.unlink(`${downloadFolder}/${video_id}.mp3`, () => {
-        console.log("deleted file");
-      });
+      // console.log(progress);
     })
+    // after download ends convert the file to mp3
     .on("end", () => {
-      fs.rename(
-        `${downloadFolder}/${video_id}.mp3`,
-        `${downloadFolder}/${sanitizer(title)}.mp3`,
-        () => {
-          mainWindow.webContents.send("progress", {
-            completed: true,
-            video_id,
-            progress: 100
-          });
-          console.log("finished downloading");
-          delete ffmpegProccess[video_id];
+      convert(video_id, title, downloadFolder, thumbnail_url, error => {
+        mainWindow.webContents.send("progress", {
+          completed: true,
+          video_id,
+          progress: 100
+        });
+        if (error !== null) {
+          return errorHandler(error, video_id);
         }
-      );
+        state.deleteProcess(video_id);
+      });
     });
-  ffmpegProccess[video_id] = { video_id, task };
+  // add the readable stream in the processes object so we can control it
+  state.addProcess(video_id, "readable", readable);
+  let writeable = readable.pipe(
+    fs.createWriteStream(`${downloadFolder}/${video_id}.mp3`)
+  );
+  // destroy itself when readable stream closes (on unpipe)
+  // .on("unpipe", writeable.destroy);
+  state.addProcess(video_id, "writeable", writeable);
 };
 
 const downloadPlaylist = info => {
