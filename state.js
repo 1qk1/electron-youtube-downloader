@@ -17,15 +17,15 @@ class State {
   }
 
   deleteProcess(video_id) {
-    if (this.processes[key].readable !== undefined) {
-      this.processes[key].readable.unpipe();
-      this.processes[key].readable.destroy();
+    if (this.processes[video_id].readable !== undefined) {
+      this.processes[video_id].readable.unpipe();
+      this.processes[video_id].readable.destroy();
     }
-    if (this.processes[key].writeable !== undefined) {
-      this.processes[key].writeable.destroy();
+    if (this.processes[video_id].writeable !== undefined) {
+      this.processes[video_id].writeable.destroy();
     }
-    if (this.processes[key].ffmpeg !== undefined) {
-      this.processes[key].ffmpeg.kill();
+    if (this.processes[video_id].ffmpeg !== undefined) {
+      this.processes[video_id].ffmpeg.kill();
     }
     delete this.processes[video_id];
   }
