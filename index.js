@@ -26,7 +26,7 @@ const initWindow = () => {
 errorHandler = (error, video_id) => {
   console.log("error:", error);
   console.log("deleting processes for video_id:", video_id);
-  deleteProcess(video_id);
+  state.deleteProcess(video_id);
 };
 
 const loadMain = () => {
@@ -81,25 +81,30 @@ const downloadOne = async ({ url, downloadQuality }) => {
     })
     // after download ends convert the file to mp3
     .on("end", () => {
-      convert(video_id, title, downloadFolder, thumbnail_url, error => {
-        mainWindow.webContents.send("progress", {
-          completed: true,
-          video_id,
-          progress: 100
-        });
-        if (error !== null) {
-          return errorHandler(error, video_id);
+      convert(
+        video_id,
+        title,
+        downloadFolder,
+        downloadQuality,
+        thumbnail_url,
+        error => {
+          mainWindow.webContents.send("progress", {
+            completed: true,
+            video_id,
+            progress: 100
+          });
+          if (error !== null) {
+            return errorHandler(error, video_id);
+          }
+          state.deleteProcess(video_id);
         }
-        state.deleteProcess(video_id);
-      });
+      );
     });
   // add the readable stream in the processes object so we can control it
   state.addProcess(video_id, "readable", readable);
   let writeable = readable.pipe(
     fs.createWriteStream(`${downloadFolder}/${video_id}.mp3`)
   );
-  // destroy itself when readable stream closes (on unpipe)
-  // .on("unpipe", writeable.destroy);
   state.addProcess(video_id, "writeable", writeable);
 };
 
