@@ -4,15 +4,11 @@ const fs = require("fs"),
   state = require("./state");
 
 const convert = (
-  video_id,
-  title,
-  downloadFolder,
-  downloadQuality,
-  thumbnail_url,
+  { video_id, title, downloadQuality, thumbnail_url },
   callback
 ) => {
   // download the image
-  const imageFileName = `${downloadFolder}/${video_id}.jpg`;
+  const imageFileName = `${process.env.DOWNLOAD_FOLDER}/${video_id}.jpg`;
   return (
     request(thumbnail_url)
       .pipe(fs.createWriteStream(imageFileName))
@@ -21,7 +17,6 @@ const convert = (
         createFfmpegTask(
           video_id,
           title,
-          downloadFolder,
           downloadQuality,
           imageFileName,
           callback
@@ -33,12 +28,11 @@ const convert = (
 function createFfmpegTask(
   video_id,
   title,
-  downloadFolder,
   downloadQuality,
   imageFileName,
   callback
 ) {
-  const task = ffmpeg(`${downloadFolder}/${video_id}.mp3`)
+  const task = ffmpeg(`${process.env.DOWNLOAD_FOLDER}/${video_id}.mp3`)
     .addOutputOptions(
       "-i",
       imageFileName,
@@ -55,14 +49,14 @@ function createFfmpegTask(
       "-id3v2_version",
       "3"
     )
-    .save(`${downloadFolder}/${title}.mp3`)
+    .save(`${process.env.DOWNLOAD_FOLDER}/${title}.mp3`)
     .on("error", function(error, stdout, stderr) {
       console.log("ffmpeg stdout:\n" + stdout);
       console.log("ffmpeg stderr:\n" + stderr);
       callback(error);
     })
     .on("end", () => {
-      fs.unlinkSync(`${downloadFolder}/${video_id}.mp3`);
+      fs.unlinkSync(`${process.env.DOWNLOAD_FOLDER}/${video_id}.mp3`);
       fs.unlinkSync(imageFileName);
       console.log("finished downloading");
       callback(null);
