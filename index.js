@@ -1,13 +1,11 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
-const fs = require("fs");
-const ytdl = require("ytdl-core");
-const ffmpeg = require("fluent-ffmpeg");
-const ytlist = require("youtube-playlist");
-const sanitizer = require("sanitize-filename");
+const { app, BrowserWindow, ipcMain } = require("electron"),
+  ytdl = require("ytdl-core"),
+  ytlist = require("youtube-playlist"),
+  upath = require("upath"),
+  state = require("./state"),
+  downloadOne = require("./download");
 
 let mainWindow;
-let ffmpegProccess = {};
-let downloadFolder;
 
 const initWindow = () => {
   mainWindow = new BrowserWindow({
@@ -16,23 +14,20 @@ const initWindow = () => {
   });
 
   mainWindow.on("close", () => {
-    clearDownloads();
+    state.deleteAllProcesses();
   });
 
   mainWindow.loadFile(`${__dirname}/pages/main/main.html`);
 };
 
-const clearDownloads = () => {
-  if (ffmpegProccess.length !== 0) {
-    for (let proccess in ffmpegProccess) {
-      ffmpegProccess[proccess].task.kill();
-    }
-    ffmpegProccess = {};
-  }
+errorHandler = (error, video_id) => {
+  console.log("error:", error);
+  console.log("deleting processes for video_id:", video_id);
+  state.deleteProcess(video_id);
 };
 
 const loadMain = () => {
-  clearDownloads();
+  state.deleteAllProcesses();
   mainWindow.loadFile(`${__dirname}/pages/main/main.html`);
 };
 
@@ -43,71 +38,12 @@ const loadDownload = (e, downloadInfo) => {
 
 const download = downloadInfo => {
   const { url, outputFolder, downloadQuality } = downloadInfo;
-  downloadFolder = outputFolder;
+  process.env.DOWNLOAD_FOLDER = upath.normalize(outputFolder);
   if (ytdl.validateID(url) || ytdl.validateURL(url)) {
-    downloadOne({ url, downloadQuality });
+    downloadOne({ url, downloadQuality, mainWindow });
   } else {
     downloadPlaylist({ url, downloadQuality });
   }
-};
-
-const downloadOne = async ({ url, downloadQuality }) => {
-  // if url is invalid return
-  if (!ytdl.validateURL(url) && !ytdl.validateID(url)) return;
-  // get basic video info
-  const videoInfo = await ytdl.getBasicInfo(url);
-  let { title, video_id, thumbnail_url } = videoInfo;
-  title = sanitizer(title);
-  // add "vid" at the start of the video id
-  video_id = `vid-${video_id}`;
-
-  // send the info back to the main window
-  mainWindow.webContents.send("info", {
-    title,
-    thumbnail_url,
-    video_id
-  });
-  // start the download
-  const stream = ytdl(url, {
-    filter: "audio",
-    highWaterMark: 1024 * 1024 * 10
-  })
-    .on("error", e => {
-      console.log(e);
-    })
-    .on("progress", (chunk, downloaded, total) => {
-      const progress = (downloaded / total) * 100;
-      mainWindow.webContents.send("progress", { progress, video_id });
-    });
-
-  // encode the stream to mp3
-  const task = ffmpeg(stream)
-    .audioBitrate(Number(downloadQuality))
-    .audioCodec("libmp3lame")
-    .save(`${downloadFolder}/${video_id}.mp3`)
-    .on("error", () => {
-      stream.pause();
-      stream.destroy();
-      fs.unlink(`${downloadFolder}/${video_id}.mp3`, () => {
-        console.log("deleted file");
-      });
-    })
-    .on("end", () => {
-      fs.rename(
-        `${downloadFolder}/${video_id}.mp3`,
-        `${downloadFolder}/${sanitizer(title)}.mp3`,
-        () => {
-          mainWindow.webContents.send("progress", {
-            completed: true,
-            video_id,
-            progress: 100
-          });
-          console.log("finished downloading");
-          delete ffmpegProccess[video_id];
-        }
-      );
-    });
-  ffmpegProccess[video_id] = { video_id, task };
 };
 
 const downloadPlaylist = info => {
