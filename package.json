@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +21,8 @@
     "sanitize-filename": "^1.6.1",
     "upath": "^1.1.2",
     "youtube-playlist": "^1.0.1",
-    "ytdl-core": "^0.29.1"
-  }
+    "ytdl-core": "^0.29.1",
+    "snyk": "^1.189.0"
+  },
+  "snyk": true
 }
