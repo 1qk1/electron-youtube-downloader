@@ -12,7 +12,7 @@
     "electron": "^4.1.4"
   },
   "dependencies": {
-    "electron-store": "^2.0.0",
+    "electron-store": "^3.1.0",
     "fluent-ffmpeg": "^2.1.2",
     "jquery": "^3.4.0",
     "request": "^2.88.0",
