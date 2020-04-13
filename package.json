@@ -14,7 +14,7 @@
   "dependencies": {
     "electron-store": "^2.0.0",
     "fluent-ffmpeg": "^2.1.2",
-    "jquery": "^3.4.0",
+    "jquery": "^3.5.0",
     "request": "^2.88.0",
     "sanitize-filename": "^1.6.1",
     "upath": "^1.1.2",
